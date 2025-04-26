@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+import math
 
 import rclpy
 from rclpy.node import Node
@@ -12,22 +13,60 @@ class LidarPublisherNode(Node):
     def __init__(self):
         super().__init__("lidar_publisher")
         self.get_logger().info("Running lidar publisher node")
+        self.lidar_publisher_ = self.create_publisher(LaserScan, 'scan', 10)
         self.lidar_streamer = LidarStreamer(port="/dev/ttyUSB0")
-        self.start_scan()
+        time.sleep(1)
+        self.start_scanner()
 
-    def start_scan(self):
-        scan = self.lidar_streamer.start()
+        self.scan_timer_ = self.create_timer(2.0, self.capture_scan)
+        
+    def start_scanner(self):
+        self.lidar_streamer.start()
         time.sleep(2)
-        scan_data = self.lidar_streamer.get_latest_measurements()
-        self.get_logger().info(f'Scan data: {scan_data}')
+
+    def capture_scan(self):
+        self.scan_data_ = self.lidar_streamer.get_latest_measurements()
+        #self.get_logger().info(f'Scan data: {self.scan_data_}')
+        self.process_scan_ranges()
+        #self.get_logger().info(f'Scan data: {self.ranges_}')
+        self.publish_scan()
+
+    def process_scan_ranges(self):
+        self.ranges_ = []
+
+        for _,distance in sorted(self.scan_data_.items(), key=lambda measurement:float(measurement[0])):
+            distance_in_metres = distance / 1000
+
+            self.ranges_.append(distance_in_metres if distance_in_metres > 0.0 else math.inf)
+
+    def publish_scan(self):
+        scan_msg = LaserScan()
+        scan_msg.angle_min = math.radians(0)
+        scan_msg.angle_max = math.radians(359)
+        scan_msg.angle_increment = math.radians(0.72)
+        scan_msg.range_min = 0.05
+        scan_msg.range_max = 12.00
+        scan_msg.ranges = self.ranges_
+
+        self.lidar_publisher_.publish(scan_msg)
+
+    def destroy_node(self):
+        self.get_logger().info("Stopping Lidar Streamer")
         self.lidar_streamer.stop()
+        super().destroy_node()
+
 
 def main(args=None):
-    rclpy.init(args=None)
+    rclpy.init(args=args)
     node = LidarPublisherNode()
-    rclpy.spin(node)
-    node.lidar_streamer.stop()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.get_logger().info("Destroying node and stopping Lidar Streamer")
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == "__main__":
     main()
