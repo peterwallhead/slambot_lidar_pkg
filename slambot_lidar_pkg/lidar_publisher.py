@@ -9,7 +9,7 @@ from sensor_msgs.msg import LaserScan
 
 from slambot_lidar_pkg.lidar import LidarStreamer
 
-class LidarPublisherNode(Node):
+class LidarPublisher(Node):
     def __init__(self):
         super().__init__("lidar_publisher")
         self.get_logger().info("Running lidar publisher node")
@@ -18,7 +18,7 @@ class LidarPublisherNode(Node):
         time.sleep(1)
         self.start_scanner()
 
-        self.scan_timer_ = self.create_timer(2.0, self.capture_scan)
+        self.scan_timer_ = self.create_timer(1.0, self.capture_scan)
         
     def start_scanner(self):
         self.lidar_streamer.start()
@@ -26,9 +26,7 @@ class LidarPublisherNode(Node):
 
     def capture_scan(self):
         self.scan_data_ = self.lidar_streamer.get_latest_measurements()
-        #self.get_logger().info(f'Scan data: {self.scan_data_}')
         self.process_scan_ranges()
-        #self.get_logger().info(f'Scan data: {self.ranges_}')
         self.publish_scan()
 
     def process_scan_ranges(self):
@@ -58,7 +56,7 @@ class LidarPublisherNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = LidarPublisherNode()
+    node = LidarPublisher()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
