@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import sys
+import argparse
 import time
 import math
 
@@ -10,11 +12,11 @@ from sensor_msgs.msg import LaserScan
 from slambot_lidar_pkg.lidar import LidarStreamer
 
 class LidarPublisher(Node):
-    def __init__(self):
+    def __init__(self, lidar_port):
         super().__init__("lidar_publisher")
         self.get_logger().info("Running lidar publisher node")
         self.lidar_publisher_ = self.create_publisher(LaserScan, 'scan', 10)
-        self.lidar_streamer = LidarStreamer(port="/dev/ttyUSB0")
+        self.lidar_streamer = LidarStreamer(port=lidar_port)
         time.sleep(1)
         self.start_scanner()
 
@@ -55,8 +57,13 @@ class LidarPublisher(Node):
 
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = LidarPublisher()
+    parser = argparse.ArgumentParser(description='LidarPublisher')
+    parser.add_argument('--lidar_port', type=str, default='/dev/ttyUSB0', help='Set lidar port')
+
+    user_args, ros_args = parser.parse_known_args()
+
+    rclpy.init(args=ros_args)
+    node = LidarPublisher(lidar_port=user_args.lidar_port)
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
