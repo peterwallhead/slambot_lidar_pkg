@@ -8,6 +8,7 @@ import math
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
+from builtin_interfaces.msg import Time
 
 from slambot_lidar_pkg.lidar import LidarStreamer
 
@@ -41,6 +42,8 @@ class LidarPublisher(Node):
 
     def publish_scan(self):
         scan_msg = LaserScan()
+        scan_msg.header.stamp = self.get_clock().now().to_msg()
+        scan_msg.header.frame_id = "laser"
         scan_msg.angle_min = math.radians(0)
         scan_msg.angle_max = math.radians(359)
         scan_msg.angle_increment = math.radians(0.72)
