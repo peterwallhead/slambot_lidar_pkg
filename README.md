@@ -16,5 +16,5 @@ colcon build --packages-select slambot_lidar_pkg
 Source and run from your workspace, ensuring you've selected the correct USB port
 ```
 source ~/.bashrc
-ros2 run slambot_lidar_pkg lidar_publisher -- --lidar_port '~/dev/ttyUSB0'
+ros2 run slambot_lidar_pkg lidar_publisher -- --lidar_port '/dev/ttyUSB0'
 ```
