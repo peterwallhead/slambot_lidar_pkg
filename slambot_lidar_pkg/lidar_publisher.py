@@ -5,6 +5,9 @@ import argparse
 import time
 import math
 
+from tf2_ros import TransformBroadcaster
+from geometry_msgs.msg import TransformStamped
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
@@ -16,6 +19,7 @@ class LidarPublisher(Node):
     def __init__(self, lidar_port):
         super().__init__("lidar_publisher")
         self.get_logger().info("Running lidar publisher node")
+        self.tf_broadcaster = TransformBroadcaster(self)
         self.lidar_publisher_ = self.create_publisher(LaserScan, 'scan', 10)
         self.lidar_streamer = LidarStreamer(port=lidar_port)
         time.sleep(1)
@@ -52,6 +56,17 @@ class LidarPublisher(Node):
         scan_msg.ranges = self.ranges_
 
         self.lidar_publisher_.publish(scan_msg)
+
+        t = TransformStamped()
+        t.header.stamp = scan_msg.header.stamp
+        t.header.frame_id = 'base_link'
+        t.child_frame_id = 'laser'
+        t.transform.translation.x = 0.0
+        t.transform.translation.y = 0.0
+        t.transform.translation.z = 0.0
+        t.transform.rotation.w = 1.0
+
+        self.tf_broadcaster.sendTransform(t)
 
     def destroy_node(self):
         self.get_logger().info("Stopping Lidar Streamer")
