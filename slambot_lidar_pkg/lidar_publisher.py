@@ -53,7 +53,7 @@ class LidarPublisher(Node):
         scan_msg.angle_increment = math.radians(0.72)
         scan_msg.range_min = 0.05
         scan_msg.range_max = 12.00
-        scan_msg.ranges = self.ranges_
+        scan_msg.ranges = list(reversed(self.ranges_))
 
         self.lidar_publisher_.publish(scan_msg)
 
