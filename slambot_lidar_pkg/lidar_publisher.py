@@ -18,6 +18,10 @@ from slambot_lidar_pkg.lidar import LidarStreamer
 class LidarPublisher(Node):
     def __init__(self, lidar_port):
         super().__init__("lidar_publisher")
+
+        self.range_min_ = 0.14 # Robot's minimum detectable range in meters (14 cm)
+        self.range_max_ = 12.00 # Robot's maximum detectable range in meters (12 m)
+
         self.get_logger().info("Running lidar publisher node")
         self.tf_broadcaster = TransformBroadcaster(self)
         self.lidar_publisher_ = self.create_publisher(LaserScan, 'scan', 10)
@@ -42,7 +46,7 @@ class LidarPublisher(Node):
         for _,distance in sorted(self.scan_data_.items(), key=lambda measurement:float(measurement[0])):
             distance_in_metres = distance / 1000
 
-            self.ranges_.append(distance_in_metres if distance_in_metres > 0.0 else math.inf)
+            self.ranges_.append(distance_in_metres if distance_in_metres >= self.range_min_ else math.inf)
 
     def publish_scan(self):
         scan_msg = LaserScan()
@@ -51,8 +55,8 @@ class LidarPublisher(Node):
         scan_msg.angle_min = math.radians(0)
         scan_msg.angle_max = math.radians(359)
         scan_msg.angle_increment = math.radians(0.72)
-        scan_msg.range_min = 0.05
-        scan_msg.range_max = 12.00
+        scan_msg.range_min = self.range_min_
+        scan_msg.range_max = self.range_max_
         scan_msg.ranges = list(reversed(self.ranges_))
 
         self.lidar_publisher_.publish(scan_msg)
