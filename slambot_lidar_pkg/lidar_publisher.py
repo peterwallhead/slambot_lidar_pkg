@@ -67,7 +67,7 @@ class LidarPublisher(Node):
         t.child_frame_id = 'laser'
         t.transform.translation.x = 0.0
         t.transform.translation.y = 0.0
-        t.transform.translation.z = 0.0
+        t.transform.translation.z = 0.2965
         t.transform.rotation.w = 1.0
 
         self.tf_broadcaster.sendTransform(t)
